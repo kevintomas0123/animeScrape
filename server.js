@@ -28,7 +28,7 @@ app.use(express.static("public"));
 
 
 // Connect to the Mongo DB
-mongoose.connect("mongodb://localhost/anime");
+//mongoose.connect("mongodb://localhost/anime");
 
 // Routes
 
@@ -69,87 +69,94 @@ app.get("/scrape", function (req, res) {
 });
 
 /// Route for getting all Articles from the db
-app.get("/articles", function(req, res) {
-  
+app.get("/articles", function (req, res) {
+
   db.Article
     .find({})
-    .sort({articleCreated:-1})
-    .then(function(dbArticle) {
+    .sort({ articleCreated: -1 })
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
 
 // Route for grabbing a specific Article by id, populate it with it's note
-app.get("/articles/:id", function(req, res) {
+app.get("/articles/:id", function (req, res) {
 
   db.Article
     .findOne({ _id: req.params.id })
     .populate("note")
-    .then(function(dbArticle) {
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
 
 // Route for saving/updating an Article's associated Note
-app.post("/articles/:id", function(req, res) {
+app.post("/articles/:id", function (req, res) {
 
   db.Note
     .create(req.body)
-    .then(function(dbNote) {
+    .then(function (dbNote) {
       return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
     })
-    .then(function(dbArticle) {
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
 
 // Route for saving/updating article to be saved
-app.put("/saved/:id", function(req, res) {
+app.put("/saved/:id", function (req, res) {
 
   db.Article
-    .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: true }})
-    .then(function(dbArticle) {
+    .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: true } })
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
 
 // Route for getting saved article
-app.get("/saved", function(req, res) {
+app.get("/saved", function (req, res) {
 
   db.Article
     .find({ isSaved: true })
-    .then(function(dbArticle) {
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
 
 // Route for deleting/updating saved article
-app.put("/delete/:id", function(req, res) {
+app.put("/delete/:id", function (req, res) {
 
   db.Article
-    .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: false }})
-    .then(function(dbArticle) {
+    .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: false } })
+    .then(function (dbArticle) {
       res.json(dbArticle);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       res.json(err);
     });
 });
+// If deployed, use the deployed database. Otherwise use the local mongoHeadlines database
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+
+// Set mongoose to leverage built in JavaScript ES6 Promises
+// Connect to the Mongo DB
+mongoose.Promise = Promise;
+mongoose.connect(MONGODB_URI);
 
 // Start the server
 app.listen(PORT, function () {
